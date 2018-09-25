@@ -1,0 +1,293 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+
+
+<div class="easyui-panel" style="margin-bottom: 5px;padding:5px;">
+    问题序号必须唯一，并且不能和其它类型的问题序号重复<br />
+    删除前请先保存
+</div>
+<div style="padding:10px;height:auto">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add'" onclick="addRecord()">新增</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save'" onclick="accept()">保存</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove'" onclick="deleteRecord()">删除</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-redo'" onclick="importExcel()">批量导入</a>
+</div>
+
+<table class="easyui-datagrid"
+       id="dg" 
+       data-options="
+            height: (document.body.clientHeight || document.documentElement.clientHeight)-100,
+            rownumbers:true,
+            singleSelect:true,
+            url:'checklist',
+            method:'get',
+            onClickRow: onClickRow">
+    <thead>
+        <tr>
+            <th data-options="field:'qno',width:80,editor:'text'">问题序号</th>
+            <!--  <th data-options="field:'img',width:80,formatter:rowformater,align:'center'">相关图片</th> -->
+            <th data-options="field:'question',editor:'text',width:200">问题描述</th>
+            <th data-options="field:'a1',editor:'text',width:120">选项1</th>
+            <th data-options="field:'a2',editor:'text',width:120">选项2</th>
+
+        </tr>
+    </thead>
+</table>
+
+<!-- 上传封面图片 隐藏 -->
+<div id="showpic" class="easyui-dialog"
+     style="width: 480px; height: 440px; padding: 30px" closed="true"
+     modal="true" buttons="#showpic-buttons">
+    <form id="fimg" method="post" enctype="multipart/form-data">
+        <div style="margin-bottom: 20px">
+            <img alt="暂无图片，请设置" id="picimg" name="imgurl"
+                 style="width: 400px; height: 240px;" align="middle" />
+
+        </div>
+        <div style="margin-bottom: 20px">
+            <div>400px*240px</div>
+            <input id="picchoose" class="easyui-filebox" name="file"
+                   data-options="accept: 'image/*',buttonText:'选择图片',required:true,prompt:'选择一张本地图片'"
+                   style="width: 100%">
+        </div>
+
+        <input id="picid" type="hidden" name="qid" value="" />
+
+    </form>
+</div>
+<div id="showpic-buttons">
+    <a href="#" class="easyui-linkbutton" iconcls="icon-ok"
+       onclick="saveImg()">保存</a>
+    <a href="#" class="easyui-linkbutton"
+       iconcls="icon-cancel"
+       onclick="javascript:$('#showpic').dialog('close')">取消</a>
+</div>
+
+
+<!-- 导入 -->
+<div id="dlgimport" class="easyui-dialog"
+     style="width: 400px; height: 300px; padding:30px" closed="true" modal="true"
+     buttons="#dlgimport-button">
+    <form id="fmimport" method="post" enctype="multipart/form-data">
+
+        <div style="margin-bottom:20px">
+            <a href="~/Content/check_moban.xls" target="_blank"><span style="color: red"> 点击下载模板</span></a>&nbsp;请严格按照模板文件来。
+        </div>
+
+        <div style="margin-bottom:20px">
+            <input id="xlschoose" class="easyui-filebox" name="file" data-options="accept: 'application/vnd.ms-excel',buttonText:'选择excel',required:true,prompt:'选择本地文件'" style="width:100%">
+        </div>
+
+    </form>
+</div>
+<div id="dlgimport-button">
+    <a href="#" class="easyui-linkbutton" iconcls="icon-ok"
+       onclick="saveExcel()">保存</a>
+    <a href="#" class="easyui-linkbutton"
+       iconcls="icon-cancel" onclick="javascript:$('#dlgimport').dialog('close')">取消</a>
+</div>
+
+@section Script{
+
+<script type="text/javascript">
+
+
+    var editIndex = undefined;
+    function endEditing() {
+        if (editIndex == undefined) { return true }
+        if ($('#dg').datagrid('validateRow', editIndex)) {
+            $('#dg').datagrid('endEdit', editIndex);
+            editIndex = undefined;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    function onClickRow(index) {
+        if (editIndex != index) {
+            if (endEditing()) {
+                $('#dg').datagrid('selectRow', index)
+                        .datagrid('beginEdit', index);
+                editIndex = index;
+            } else {
+                $('#dg').datagrid('selectRow', editIndex);
+            }
+        }
+    }
+    function addRecord() {
+        if (endEditing()) {
+            $('#dg').datagrid('appendRow', { status: 'P' });
+            editIndex = $('#dg').datagrid('getRows').length - 1;
+            $('#dg').datagrid('selectRow', editIndex)
+                    .datagrid('beginEdit', editIndex);
+        }
+    }
+
+
+    //save
+    function accept() {
+        if (endEditing()) {
+            //获取更新更改的行的集合
+            row = $("#dg").datagrid('getChanges');
+            //DataGrid的更该行为不为0
+            if (row.length) {
+                $.ajax(
+                    {
+                        type: 'POST',
+                        url: "checksave",
+                        data: { 'data': JSON.stringify(row) },
+                        success: function (data) {
+                            if (data != "") {
+                                $.messager.alert('提示', '保存成功！', 'info', function () {
+                                    $('#dg').datagrid('reload');    // 重新载入当前页面数据
+                                });
+
+
+                            }
+                            else {
+                                $.messager.alert('提示信息', '保存失败，请联系管理员！', 'warning');
+                            }
+                        }
+                    });
+            }
+            else  //如果没有修改数据，则提醒用户
+            {
+                $.messager.alert('提示信息', '您还没有修改信息！', 'warning');
+            }
+        }
+        editIndex = undefined;
+    }
+
+
+    //删除记录
+    function deleteRecord() {
+        editIndex = undefined;
+        var row = $('#dg').datagrid('getSelected');
+        if (row) {
+            $.messager.confirm('提示', '你确定要删除这条信息吗？', function (r) {
+                if (r) {
+                    $.ajax({
+                        url: "checkdel?qid=" + row.qid,
+                        type: "get",
+                        timeout: "100000",
+                        dataType: "json",
+                        data: {
+
+                        },
+                        success: function (text) {
+                            if (text.msg == "") {
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: text.msg
+                                });
+                            }
+                        },
+                        error: function () {
+                            $.messager.show({
+                                title: '错误',
+                                msg: '系统异常！'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+
+    //导入弹出层
+    function importExcel() {
+        $('#dlgimport').dialog('open').dialog('setTitle', '导入');
+        $('#fmimport').form('clear');
+    }
+
+    var upfile = false;
+    function saveExcel() {
+        if (upfile == true) {
+            return;
+        }
+        $('#fmimport').form('submit', {
+            url: "checkimport",
+            onSubmit: function () {
+                var b = $(this).form('validate');
+                if (b) {
+                    upfile = true;
+                } else {
+                    upfile = false;
+                }
+                return b;
+            },
+            success: function (text) {
+                upfile = false;
+                var text = eval('(' + text + ')');
+                if (text.msg == '') {
+                    $('#dlgimport').dialog('close');
+                    $('#dg').datagrid('reload'); // 重新载入当前页面数据
+                } else {
+                    $.messager.show({
+                        title: '错误',
+                        msg: text.msg
+                    });
+                }
+
+            }, error: function () {
+                upfile = false;
+                $.messager.show({
+                    title: '错误',
+                    msg: '系统错误'
+                });
+            }
+        });
+    }
+
+
+
+
+    //行内容格式化
+    function rowformater(value, row, index) {
+        if (row.status == 'P') {
+            return "";
+        } else {
+            return "<a href='javascript:void(0);' onclick=showImg('" + row.qid
+                + "','" + row.img + "');>点击设置</a>";
+        }
+    }
+
+
+    //显示窗体
+    function showImg(qid, img) {
+
+        $('#picimgonly').attr('src', '');
+        $('#picimg').attr('src', '');
+        $('#fimg')[0].reset();
+        $('#picid').val(qid);
+        $('#picimg').attr('src', '../upload/' + img);
+        $('#showpic').dialog('open').dialog('setTitle', '修改题目图片');
+    }
+
+    function saveImg() {
+        $('#fimg').form('submit', {
+            url: "checkupdate",
+            onSubmit: function () {
+                return $(this).form('validate');
+            },
+            success: function (text) {
+                var text = eval('(' + text + ')');
+                if (text.msg == '') {
+                    $('#showpic').dialog('close');
+                    $.messager.alert('提示', '设置成功', 'info', function () {
+                        $('#dg').datagrid('reload'); // 重新载入当前页面数据
+                    });
+
+                } else {
+                    $.messager.alert("错误", text.msg, "info", function () {
+                    });
+                }
+            }
+        });
+    }
+</script>
+}

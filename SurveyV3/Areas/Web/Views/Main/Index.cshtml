@@ -1,0 +1,86 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+
+}
+
+
+<div region="north" split="true" border="false"
+     style="overflow: hidden; height: 40px; background: #0088CC repeat-x center 50%; line-height: 20px; color: #fff; font-family: Verdana, 微软雅黑, 黑体">
+    <h1 style="letter-spacing: 1px; margin: 7px 10px ; float: left;font-size:20px;">
+        重庆市居民健康素养监测后台管理系统 Ver3.0
+    </h1>
+    <div style="margin: 7px; float: right; vertical-align: middle;color:white;">
+        <a href="/Login/LoginOut"><font color="white">退出</font></a>
+    </div>
+</div>
+
+<div region="west" hide="true" split="true" title="工具菜单"
+     style="width: 200px;" id="west">
+    <div id="nav" class="easyui-accordion" fit="true" border="false">
+        <ul id="tt"></ul>
+
+    </div>
+</div>
+<div id="mainPanle" region="center" style="background: #eee;">
+    <div id="tabs" class="easyui-tabs" fit="true" border="false">
+
+    </div>
+</div>
+
+@section Script{
+
+
+    <script type="text/javascript">
+
+        var bd = $("body").eq(0)
+        bd.css("overflow-y", "hidden"); 
+        bd.attr("scroll", "no");
+        bd.attr("class", "easyui-layout");
+
+        $('#tt').tree({
+            url: '/Web/Main/rightTree',
+            onClick: function (node) {
+                if (node.url != '') {
+                    addTab(node.text, node.url);
+                }
+            }
+        });
+
+
+        $(function () {
+
+            tabClose();
+
+        })
+
+        function addTab(subtitle, url) {
+            if (!$('#tabs').tabs('exists', subtitle)) {
+                $('#tabs').tabs('add', {
+                    title: subtitle,
+                    content: createFrame(url),
+                    closable: true
+                });
+            } else {
+                $('#tabs').tabs('select', subtitle);
+                $('#mm-tabupdate').click();
+            }
+            tabClose();
+        }
+
+        function createFrame(url) {
+            var s = '<iframe scrolling="auto" frameborder="0"  src="' + url + '" style="width:100%;height:100%;"></iframe>';
+            return s;
+        }
+
+        function tabClose() {
+            /*双击关闭TAB选项卡*/
+            $(".tabs-inner").dblclick(function () {
+                var subtitle = $(this).children(".tabs-closable").text();
+                $('#tabs').tabs('close', subtitle);
+            })
+
+        }
+    </script>
+}
+
+

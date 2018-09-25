@@ -1,0 +1,274 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+@section Content{
+<script type="text/javascript"> 
+    var acode = '@ViewBag.acode';
+</script>
+}
+
+<div class="easyui-panel" style="margin-bottom: 5px;padding:5px;">
+    区域管理员专用页面，按日期查询和导出调查结果（已去重）<br />
+    “导出记录列表”为导出时间范围内已去重的所有记录，而不是当前页<br />
+</div>
+<div id="tb" style="padding: 5px; height: auto">
+
+    <div>
+        开始日期: <input class="easyui-datebox" style="width: 150px"
+                     id="txt_start" data-options="formatter:myformatter,parser:myparser,editable: false">
+        结束日期: <input class="easyui-datebox" style="width: 150px"
+                     data-options="formatter:myformatter,parser:myparser,editable: false" id="txt_end">
+        问卷编号:<input class="easyui-textbox" id="txt_code" data-options="prompt:'选填'" style="width:150px;">
+        <a href="javascript:void(0);" class="easyui-linkbutton" style="margin-left:10px;"
+           iconcls="icon-search" onclick="doSearch();">查询</a>
+
+        <a href="javascript:void(0);" class="easyui-linkbutton" style="margin-left:10px;"
+           iconcls="icon-save" onclick="exportWorkExcel();">导出记录列表</a>
+    </div>
+    <div>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-edit'" onclick="editInfo()">修改受访信息</a> 
+    </div>
+</div>
+<table class="easyui-datagrid"
+       id="dg" 
+       data-options="
+            height: (document.body.clientHeight || document.documentElement.clientHeight)-100,
+            rownumbers:true,
+            singleSelect:true,
+            toolbar:'#tb',
+            pagination:true,
+            method:'get'">
+    <thead>
+        <tr>
+            <th data-options="field:'StartTime',width:120">调查开始时间</th>
+            <th data-options="field:'EndTime',width:120">调查结束时间</th>
+            <th data-options="field:'Second',width:80">耗时</th>
+            <th data-options="field:'Code',width:100">问卷编码</th>
+            <th data-options="field:'KISH',width:60">KISH值</th>
+            <th data-options="field:'Name',width:80">受访者姓名</th>
+            <th data-options="field:'Age',width:50">年龄</th>
+            <th data-options="field:'Sex',width:50">性别</th>
+            <th data-options="field:'Phone',width:100">电话号码</th>
+            <th data-options="field:'Address',width:150">家庭地址</th>
+            <th data-options="field:'SName',width:80">调查人员</th>
+            <th data-options="field:'FamilyCount',width:80">家庭成员数量</th>
+            <th data-options="field:'dx2',align:'center',formatter:memberformate,width:80">家庭成员</th>
+            <th data-options="field:'ks',align:'center',formatter:detailformate,width:120">受访详情</th>
+            <th data-options="field:'ks2',align:'center',formatter:changeformate,width:100">修改答案</th>
+        </tr>
+    </thead>
+</table>
+
+
+<div id="dlg" class="easyui-dialog"
+     style="width: 400px; height: 400px; padding: 20px" closed="true">
+  
+    <form id="fmw" method="post" target="_blank">
+        <input type="hidden" id="w_start" name="start" value="" />
+        <input type="hidden" id="w_end" name="end" value="" />
+    </form>
+</div>
+
+
+<!-- 修改 -->
+<div id="dlgedit" class="easyui-dialog"
+     style="width: 400px; height: 300px; padding: 20px" closed="true"
+     modal="true" buttons="#dlgedit-buttons">
+    <form id="fmedit" method="post">
+        <input id="edit_rid" name="rid" type="hidden" />
+        <input id="edit_oldname" name="oldname" type="hidden" />
+        <div style="margin-bottom: 20px">
+            <span style="width: 80px;">问卷编码:</span>
+            <span id="edit_code"></span>
+        </div>
+
+        <div style="margin-bottom: 20px">
+            <span style="width: 80px;">受访者姓名:</span>
+            <input name="name" id="edit_name"
+                   style="width: 100%; height: 32px" class="easyui-textbox"
+                   maxlength="30" data-options="required:true,prompt:'必填'" />
+        </div>
+
+        <div style="margin-bottom: 20px">
+            <span style="width: 80px;">联系电话:</span>
+            <input name="phone" id="edit_phone"
+                   style="width: 100%; height: 32px" class="easyui-numberbox"
+                   maxlength="30" data-options="required:true,prompt:'必填'" />
+        </div>
+
+
+    </form>
+</div>
+<div id="dlgedit-buttons">
+    <a href="#" class="easyui-linkbutton" iconcls="icon-ok"
+       onclick="saveEdit()">保存</a>
+    <a href="#" class="easyui-linkbutton"
+       iconcls="icon-cancel" onclick="javascript: $('#dlgedit').dialog('close')">取消</a>
+</div>
+@section Script{
+
+<script type="text/javascript">
+    function detailformate(value, row, index) {
+        return "<a href='javascript:void(0);' onclick=seeRecord('" + row.RID + "','" + row.Code + "')>点击查看</a>";
+    }
+
+    //详情界面
+    function seeRecord(rid, name) {
+        var url = "/Web/RespondentDetail/Index?rid=" + rid;
+        window.parent.addTab(name, url);
+    }
+
+    function memberformate(value, row, index) {
+        return "<a href='javascript:void(0);' onclick=seeMember('" + row.FID + "','" + row.Code + "')>点击查看</a>";
+
+    }
+
+    //查看成员
+    function seeMember(fid, code) {
+        var url = "/Web/Family/MemberPage?code=" + code;
+        window.parent.addTab("家庭成员：" + code, url);
+    }
+
+
+    function changeformate(value, row, index) {
+        return "<a href='javascript:void(0);' onclick=seeAnswer('" + row.RID + "','" + row.Code + "')>点击修改</a>";
+    }
+
+    //详情界面
+    function seeAnswer(rid, code) {
+        var url = "/Web/Respondent/AnswersEditPageF?rid=" + rid;
+        window.parent.addTab("修改答案：" + code, url);
+    }
+
+  
+
+    //日历格式相关
+    function myformatter(date) {
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        return y + '-' + (m < 10 ? ('0' + m) : m) + '-'
+                + (d < 10 ? ('0' + d) : d);
+    }
+    function myparser(s) {
+        if (!s)
+            return new Date();
+        var ss = (s.split('-'));
+        var y = parseInt(ss[0], 10);
+        var m = parseInt(ss[1], 10);
+        var d = parseInt(ss[2], 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            return new Date(y, m - 1, d);
+        } else {
+            return new Date();
+        }
+    }
+
+    //行显示样式
+    function timeformater(value, row, index) {
+        if (row.timemin < 10) {
+            return row.date + " 0" + row.timemin + ":00-" + row.timemax
+                    + ":00";
+        } else {
+            return row.date + " " + row.timemin + ":00-" + row.timemax
+                    + ":00";
+        }
+    }
+
+    //搜索事件
+    function doSearch(value) {
+        var start = $("#txt_start").val();
+        if (start == '') {
+            alert('请选择起始时间');
+            return;
+        }
+
+        var end = $("#txt_end").val();
+        if (end == '') {
+            alert('请选择结束时间');
+            return;
+        }
+        var code = $('#txt_code').val();
+        var urlstr = '/Web/Respondent/respAllList?acode=' + acode + '&start=' + start + '&end=' + end + "&code=" + code;
+        $("#dg").datagrid({
+            url: urlstr
+        })
+    }
+     
+
+
+    function exportWorkExcel() {
+        var start = $("#txt_start").val();
+        if (start == '') {
+            alert('请选择起始时间');
+            return;
+        }
+
+        var end = $("#txt_end").val();
+        if (end == '') {
+            alert('请选择结束时间');
+            return;
+        }
+
+
+        $("#w_start").val(start);
+        $("#w_end").val(end);
+
+        $('#fmw').form('submit', {
+            url: "/Web/Respondent/exportWorkerExcel",
+            success: function (text) {
+                var text = eval('(' + text + ')');
+                $.messager.alert('提示', text.msg, 'warning');
+            }, error: function () {
+                $.messager.alert('提示', '系统错误', 'warning');
+
+            }
+        });
+    }
+
+    //修改信息相关
+    function editInfo() {
+        var row = $('#dg').datagrid('getSelected');
+        if (row) {
+            //弹出层 
+            $('#fmedit').form('clear');
+            $('#edit_rid').val(row.RID);
+            $('#edit_oldname').val(row.Name);
+
+            $('#edit_name').textbox('setText', row.Name);
+            $('#edit_name').textbox('setValue', row.Name);
+
+            $('#edit_phone').textbox('setText', row.Phone);
+            $('#edit_phone').textbox('setValue', row.Phone);
+
+            $('#edit_code').html(row.Code);
+
+            $('#dlgedit').dialog('open').dialog('setTitle', '修改受访记录');
+        }
+    }
+
+
+    //保存
+    function saveEdit() {
+        $('#fmedit').form('submit', {
+            url: "rspdBaseSave",
+            dataType: "json",
+            onSubmit: function () {
+                return $(this).form('validate');
+            },
+            success: function (text) {
+                var text = eval('(' + text + ')');
+                if (text.msg == '') {
+                    $('#dlgedit').dialog('close');
+                    $('#dg').datagrid('reload');
+
+                } else {
+                    $.messager.alert("错误", text.msg, "info", function () {
+                    });
+                }
+            }
+        });
+    }
+</script>
+
+}

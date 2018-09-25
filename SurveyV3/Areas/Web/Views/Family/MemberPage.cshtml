@@ -1,0 +1,45 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+@section Content{
+    
+<script type="text/javascript">
+    var code = '@ViewBag.code';
+</script>
+}
+
+<table class="easyui-datagrid"
+       id="dg" 
+       data-options="
+            height: (document.body.clientHeight || document.documentElement.clientHeight)-10,
+            rownumbers:true,
+            singleSelect: true,
+            url: 'memberlist?code='+code,
+            singleSelect:false,
+            method: 'get'
+    ">
+    <thead>
+        <tr>
+            <th data-options="field:'name',width:100">姓名</th>
+            <th data-options="field:'sex',width:100,formatter:resultformate">性别</th>
+            <th data-options="field:'age',width:100 ">年龄</th>
+        </tr>
+    </thead>
+</table>
+
+@section Script{
+
+
+<script type="text/javascript">
+      function resultformate(value,row,index){
+          if(value=='1'){
+              return "男";
+          }else{
+              return '女';
+          }
+      } 
+</script>
+
+    
+    
+}

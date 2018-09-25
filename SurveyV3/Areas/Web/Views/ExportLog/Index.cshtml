@@ -1,0 +1,41 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+
+
+
+<table class="easyui-datagrid"
+       id="dg" 
+       data-options="
+                height: (document.body.clientHeight || document.documentElement.clientHeight)-100,
+				rownumbers:true,
+				iconCls: 'icon-edit',
+				singleSelect: true,
+				url: 'list',
+				pagination:true,
+				method: 'get'">
+    <thead>
+        <tr>
+            <th data-options="field:'CreateTime',width:150">操作时间</th>
+            <th data-options="field:'Start',width:150">查询起始时间</th>
+            <th data-options="field:'End',width:150">查询结束时间</th>
+            <th data-options="field:'Type',width:200">类型</th>
+            <th data-options="field:'ursl',formatter:detailformate,width:100">文件路径</th>
+            <th data-options="field:'State',width:100">状态</th>
+            <th data-options="field:'Second',width:150">数据查询耗时(秒)</th>
+        </tr>
+    </thead>
+</table>
+
+@section Script{
+<script type="text/javascript">
+        function detailformate(value,row,index){
+               if(row.State=='生成成功'){
+                  return "<a href='"+row.Url+"' target='_blank'>点击下载</a>";
+            }else {
+                  return '';
+               }
+    	}
+</script>
+     
+}

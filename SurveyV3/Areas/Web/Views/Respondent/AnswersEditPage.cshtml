@@ -1,0 +1,102 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+@section Content{
+
+<script type="text/javascript">
+    var rid = '@ViewBag.rid';
+ </script>
+}
+
+<div style="padding:10px;height:auto">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save'" onclick="accept()">保存</a>
+</div>
+
+<table class="easyui-datagrid"
+       id="dg"
+       data-options="
+            height: (document.body.clientHeight || document.documentElement.clientHeight)-50,
+            rownumbers:true,
+            singleSelect:true,
+            url:'rspdAnswerList?rid='+rid,
+            method:'get',
+            onClickRow: onClickRow">
+    <thead>
+        <tr>
+            <th data-options="field:'qno',width:80">问题序号</th>
+            <th data-options="field:'answer',width:200,editor:'text'">答案</th>
+        </tr>
+    </thead>
+</table>
+
+
+
+@section Script{
+
+<script type="text/javascript">
+
+    var editIndex = undefined;
+    function endEditing() {
+        if (editIndex == undefined) { return true }
+        if ($('#dg').datagrid('validateRow', editIndex)) {
+            $('#dg').datagrid('endEdit', editIndex);
+            editIndex = undefined;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    function onClickRow(index) {
+        if (editIndex != index) {
+            if (endEditing()) {
+                $('#dg').datagrid('selectRow', index)
+                        .datagrid('beginEdit', index);
+                editIndex = index;
+            } else {
+                $('#dg').datagrid('selectRow', editIndex);
+            }
+        }
+    }
+
+
+    //save
+    function accept() {
+        if (endEditing()) {
+            //获取更新更改的行的集合
+            row = $("#dg").datagrid('getChanges');
+            //DataGrid的更该行为不为0
+            if (row.length) {
+                $.ajax(
+                    {
+                        type: 'POST',
+                        url: "rspdAnswerSave",
+                        data: { 'data': JSON.stringify(row) },
+                        dataType:"json",
+                        success: function (text) {
+                            if (text.msg == '') {
+                                $.messager.alert('提示', '保存成功！', 'info', function () {
+                                    $('#dg').datagrid('reload');    // 重新载入当前页面数据
+                                });
+                            }
+                            else {
+                                $.messager.alert('提示信息', text.msg, 'warning');
+                            }
+                        },
+                        error: function () {
+                            $.messager.alert('提示', '系统出错！');
+                        }
+
+                    });
+            }
+            else  //如果没有修改数据，则提醒用户
+            {
+                $.messager.alert('提示信息', '您还没有修改信息！', 'warning');
+            }
+        }
+        editIndex = undefined;
+    }
+
+
+</script>
+
+}

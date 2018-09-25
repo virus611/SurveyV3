@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{3E7AF2F5-ECC0-4383-BDE0-449950074C4F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Business</RootNamespace>
+    <AssemblyName>Business</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DBHelper">
+      <HintPath>..\..\..\BaseProject\bin\DBHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="Library">
+      <HintPath>..\..\..\BaseProject\bin\Library.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\BaseProject\bin\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="ORM">
+      <HintPath>..\..\..\BaseProject\bin\ORM.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BQuery.cs" />
+    <Compile Include="Mobile\AnswerVO.cs" />
+    <Compile Include="Mobile\BaseInfoVO.cs" />
+    <Compile Include="Mobile\BUpload.cs" />
+    <Compile Include="Mobile\MInfoVO.cs" />
+    <Compile Include="Mobile\RspdVO.cs" />
+    <Compile Include="Mobile\SaveFamilyMemberCommitVO.cs" />
+    <Compile Include="Mobile\TimeVO.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Question\BCheckQuestion.cs" />
+    <Compile Include="Question\BInfoQuestion.cs" />
+    <Compile Include="Question\BMutiQuestion.cs" />
+    <Compile Include="Question\BSceneQuestion.cs" />
+    <Compile Include="Question\BSceneSubQuestion.cs" />
+    <Compile Include="Question\BSingleQuestion.cs" />
+    <Compile Include="Respondent\BExportLog.cs" />
+    <Compile Include="Respondent\BRspdQuery.cs" />
+    <Compile Include="Sys\BApp.cs" />
+    <Compile Include="Sys\BArea.cs" />
+    <Compile Include="Sys\BFamily.cs" />
+    <Compile Include="Tools.cs" />
+    <Compile Include="User\BAreaManager.cs" />
+    <Compile Include="User\BWorker.cs" />
+    <Compile Include="VO\AppVO.cs" />
+    <Compile Include="VO\AreaCombVO.cs" />
+    <Compile Include="VO\AreaManagerVO.cs" />
+    <Compile Include="VO\AreaVO.cs" />
+    <Compile Include="VO\CheckTreeVO.cs" />
+    <Compile Include="VO\CheckVO.cs" />
+    <Compile Include="VO\FamilyMemberVO.cs" />
+    <Compile Include="VO\FamilyVO.cs" />
+    <Compile Include="VO\MutiVO.cs" />
+    <Compile Include="VO\QInfoVO.cs" />
+    <Compile Include="VO\RspdAnswerVO.cs" />
+    <Compile Include="VO\SceneSubVO.cs" />
+    <Compile Include="VO\SceneVO.cs" />
+    <Compile Include="VO\SingleVO.cs" />
+    <Compile Include="VO\TownVO.cs" />
+    <Compile Include="VO\VillageVO.cs" />
+    <Compile Include="VO\WorkerVO.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Model\Model.csproj">
+      <Project>{dcbd80b2-f7a9-401a-ba63-045d46076428}</Project>
+      <Name>Model</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,377 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+
+
+
+<div class="easyui-panel" style="margin-bottom: 5px;padding:5px;">
+    平台管理员专用页面，用于查看各村的家庭列表<br />
+    目前只能修改姓名、地址。如果编码有错，请删除该记录并重新导入该条记录<br />
+    在修改后需要及时通知相应的调查人员重新登录。
+    修改后的结果不影响已调查过的数据
+</div>
+<div id="tb">
+    <div style="padding:5px;height:auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove'" onclick="deleteRecord()">删除</a>
+
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add'" onclick="importExcel()">批量导入</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save'" onclick="accept()">保存修改</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove'" onclick="resetRecord()">重置调查</a>
+    </div>
+    <div style="padding:5px;height:auto">
+        区选择: <input class="easyui-combobox" style="width:80px;" id="carea">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;乡镇选择: <input class="easyui-combobox" style="width:100px" id="ctown">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 村选择: <input class="easyui-combobox" style="width:100px" id="cvillage">
+    </div>
+</div>
+<table class="easyui-datagrid"
+       id="dg" 
+       data-options="
+                height: (document.body.clientHeight || document.documentElement.clientHeight)-150,
+				rownumbers:true,
+				singleSelect: false,
+				url: '',
+				method: 'get',
+				toolbar:'#tb',
+				onClickRow: ronClickRow
+				 ">
+    <thead>
+        <tr>
+            <th data-options="field:'fid',width:100,checkbox:true"></th>
+            <th data-options="field:'code',width:100">家庭户编码</th>
+            <th data-options="field:'name',width:100,editor:'text'">户主姓名</th>
+            <th data-options="field:'address',width:200,editor:'text'">详细地址</th>
+            <th data-options="field:'kish',width:120">KISH值</th>
+            <th data-options="field:'g1',width:120">f07值</th>
+            <th data-options="field:'dx2',align:'center',formatter:memberformate,width:120">家庭成员</th>
+            <th data-options="field:'rid',align:'center',formatter:resultformate,width:100">调查结果</th>
+            <th data-options="field:'lastcode',align:'center',width:100">最终完成代码</th>
+            <th data-options="field:'lasttext',align:'center',width:200">最终完成情况</th>
+        </tr>
+    </thead>
+</table>
+
+  <!-- 导入 -->
+<div id="dlgimport" class="easyui-dialog"
+     style="width: 400px; height: 300px; padding:30px" closed="true" modal="true"
+     buttons="#dlgimport-button">
+    <form id="fmimport" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="acode" id="facode">
+        <input type="hidden" name="tcode" id="ftcode">
+        <input type="hidden" name="vcode" id="fvcode">
+        <div style="margin-bottom:20px">
+            <a href="~/Content/family_moban.xls" target="_blank"><span style="color: red"> 点击下载模板</span></a>&nbsp;请严格按照模板文件来。
+        </div>
+
+        <div style="margin-bottom:20px">
+            <input id="xlschoose" class="easyui-filebox" name="file" data-options="accept: 'application/vnd.ms-excel',buttonText:'选择excel',required:true,prompt:'选择本地文件'" style="width:100%">
+        </div>
+
+    </form>
+</div>
+<div id="dlgimport-button">
+    <a href="#" class="easyui-linkbutton" iconcls="icon-ok"
+       onclick="saveExcel()">保存</a>
+    <a href="#" class="easyui-linkbutton"
+       iconcls="icon-cancel" onclick="javascript:$('#dlgimport').dialog('close')">取消</a>
+</div>
+
+
+@section Script {
+
+
+<script type="text/javascript">
+    function resultformate(value, row, index) {
+
+        if (row.rid==null || row.rid == '') {
+            return "";
+        } else if (row.rid.length > 20) {
+            return "已调查";
+        } else {
+            return row.rid;
+        }
+    }
+
+    //查看成员
+    function seeMember(fid, code) {
+        var url = "/Web/Family/MemberPage?code=" + code;
+        window.parent.addTab("家庭成员：" + code, url);
+    }
+
+
+    function memberformate(value, row, index) {
+        return "<a href='javascript:void(0);' onclick=seeMember('" + row.fid + "','" + row.code + "')>点击查看</a>";
+
+    }
+
+
+    var acode = '';
+    var tcode = '';
+    var vcode = '';
+
+    $(function () {
+        $('#carea').combobox({
+            url: '/Web/Family/AreaComb',
+            editable: false,
+            panelHeight: '200px',
+            valueField: 'id',
+            textField: 'name',
+
+            onSelect: function (rec) {
+                acode = rec.code;
+                tcode = '';
+                vcode = '';
+                $("#ctown").combobox('clear');
+                $("#cvillage").combobox('clear');
+                var url = "/Web/Family/TownComb?aid=" + rec.id; 
+                $("#ctown").combobox('reload', url);
+            },
+        });
+
+        $('#ctown').combobox({
+            url: '',
+            editable: false,
+            panelHeight: 'auto',
+            valueField: 'id',
+            textField: 'name',
+            onSelect: function (rec) {
+                tcode = rec.code;
+                vcode = '';
+                $("#cvillage").combobox('clear');
+                var url = "/Web/Family/VillageComb?tid=" + rec.id;
+                $("#cvillage").combobox('reload', url);
+            },
+        });
+
+        $('#cvillage').combobox({
+            url: '',
+            editable: false,
+            panelHeight: 'auto',
+            valueField: 'id',
+            textField: 'name',
+            onSelect: function (rec) {
+                vcode = rec.code;
+                var url = "/Web/Family/familyTownList?acode=" + acode + "&tcode=" + tcode + "&vcode=" + vcode;
+                $('#dg').datagrid('reload', url);
+            },
+        });
+    });
+</script>
+
+<script type="text/javascript">
+    var editIndex = undefined;
+    function endEditing() {
+        if (editIndex == undefined) { return true }
+        if ($('#dg').datagrid('validateRow', editIndex)) {
+            $('#dg').datagrid('endEdit', editIndex);
+            editIndex = undefined;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    function ronClickRow(index) {
+        if (editIndex != index) {
+            if (endEditing()) {
+                $('#dg').datagrid('selectRow', index)
+                        .datagrid('beginEdit', index);
+                editIndex = index;
+            } else {
+                $('#dg').datagrid('selectRow', editIndex);
+            }
+        }
+    }
+
+
+    //删除记录
+    function deleteRecord() {
+        editIndex = undefined;
+        var CheckedId = $('#dg').datagrid('getChecked');
+        var IDs = [];
+        $.each(CheckedId, function (index, item) {
+            IDs.push(item.fid);
+        });
+        var idstr = "";
+        if (IDs.length > 0) {
+            idstr = IDs.join(",")
+        }
+
+        if (idstr != '') {
+            $.messager.confirm('提示', '你确定要删除这些信息吗？', function (r) {
+                if (r) {
+                    $.ajax({
+                        url: "/Web/Family/familyTownDel",
+                        type: "post",
+                        timeout: "100000",
+                        dataType: "json",
+                        data: {
+                            'ids': idstr
+                        },
+                        success: function (text) {
+                            if (text.msg == "") {
+                                $('#dg').datagrid('reload');
+                                $('#dg').datagrid('unselectAll');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: text.msg
+                                });
+                            }
+                        },
+                        error: function () {
+                            $.messager.show({
+                                title: '错误',
+                                msg: '系统异常！'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+
+    //导入弹出层
+    function importExcel() {
+
+        if (vcode == null || vcode == '' || vcode == 'undefind') {
+            alert('请先选择村');
+            return;
+        }
+        $('#dlgimport').dialog('open').dialog('setTitle', '导入');
+        $('#fmimport').form('clear');
+        //隐藏值
+        $('#facode').val(acode);
+        $('#ftcode').val(tcode);
+        $('#fvcode').val(vcode);
+    }
+
+    var upfile = false;
+    function saveExcel() {
+        if (upfile == true) {
+            return;
+        }
+        $('#fmimport').form('submit', {
+            url: "/Web/Family/familyTownImport",
+            onSubmit: function () {
+                var b = $(this).form('validate');
+                if (b) {
+                    upfile = true;
+                } else {
+                    upfile = false;
+                }
+                return b;
+            },
+            success: function (text) {
+                upfile = false;
+                var text = eval('(' + text + ')');
+                if (text.msg == '') {
+                    $('#dlgimport').dialog('close');
+                    $('#dg').datagrid('reload'); // 重新载入当前页面数据
+                } else {
+                    $.messager.show({
+                        title: '错误',
+                        msg: text.msg
+                    });
+                }
+
+            }, error: function () {
+                upfile = false;
+                $.messager.show({
+                    title: '错误',
+                    msg: '系统错误'
+                });
+            }
+        });
+    }
+
+
+    function resetRecord() {
+        editIndex = undefined;
+        var CheckedId = $('#dg').datagrid('getChecked');
+        var IDs = [];
+        $.each(CheckedId, function (index, item) {
+            IDs.push(item.fid);
+        });
+        var idstr = "";
+        if (IDs.length > 0) {
+            idstr = IDs.join(",")
+        }
+
+        if (idstr != '') {
+            $.messager.confirm('提示', '你确定要重置这些信息吗？', function (r) {
+                if (r) {
+                    $.ajax({
+                        url: "/Web/Family/familyResetRids",
+                        type: "post",
+                        timeout: "100000",
+                        dataType: "json",
+                        data: {
+                            'ids': idstr
+                        },
+                        success: function (text) {
+                            if (text.msg == "") {
+                                $('#dg').datagrid('reload');
+                                $('#dg').datagrid('unselectAll');
+
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: text.msg
+                                });
+                            }
+                        },
+                        error: function () {
+                            $.messager.show({
+                                title: '错误',
+                                msg: '系统异常！'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+    }
+
+
+
+
+    //save
+    function accept() {
+        if (endEditing()) {
+            //获取更新更改的行的集合
+            row = $("#dg").datagrid('getChanges');
+            //DataGrid的更该行为不为0
+            if (row.length) {
+                $.ajax(
+                    {
+                        type: 'POST',
+                        url: "/Web/Family/familyChange",
+                        data: { 'data': JSON.stringify(row) },
+                        success: function (data) {
+                            if (data != "") {
+                                $.messager.alert('提示', '保存成功！', 'info', function () {
+                                    $('#dg').datagrid('reload');    // 重新载入当前页面数据
+                                });
+
+                            }
+                            else {
+                                $.messager.alert('提示信息', '保存失败，请联系管理员！', 'warning');
+                            }
+                        },
+                        error: function () {
+                            $.messager.alert('提示', '系统出错！');
+                        }
+
+                    });
+            }
+            else  //如果没有修改数据，则提醒用户
+            {
+                $.messager.alert('提示信息', '您还没有修改信息！', 'warning');
+            }
+        }
+        editIndex = undefined;
+    }
+</script>
+}

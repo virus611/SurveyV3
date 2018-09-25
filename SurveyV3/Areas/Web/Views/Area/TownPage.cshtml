@@ -1,0 +1,169 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+ @section Content{
+
+<script type="text/javascript">
+    var aid = '@ViewBag.aid';
+     </script>
+}
+
+<div class="easyui-panel" style="margin-bottom: 5px;padding:5px;">
+    同一地区的乡镇编码具有唯一性，请勿随意变动。删除记录时请先保存数据。一但删除，涉及到的家庭也会被删除，受访历史不受影响。<br />
+</div>
+<div style="padding:10px;height:auto">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add'" onclick="append()">新增</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove'" onclick="removeit()">删除</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save'" onclick="accept()">保存</a>
+
+</div>
+
+
+
+<table class="easyui-datagrid"
+       id="dg" 
+       data-options="
+            height: (document.body.clientHeight || document.documentElement.clientHeight)-100,
+            rownumbers:true,
+            iconCls: 'icon-edit',
+            singleSelect: true,
+            url: 'townList?aid='+aid,
+            method: 'get',
+            onClickRow: ronClickRow">
+    <thead>
+        <tr>
+            <th data-options="field:'name',width:200,editor:'text'">乡镇名称</th>
+            <th data-options="field:'code',width:200,editor:'text'">编码</th>
+            <th data-options="field:'ks',formatter:detailformate,width:120">村管理</th>
+        </tr>
+    </thead>
+</table>
+
+@section Script{
+
+<script type="text/javascript">
+
+
+    function detailformate(value, row, index) {
+        if (row.status == 'P') {
+            return "";
+        } else {
+            return "<a href='javascript:void(0);' onclick=seeRecord('" + row.tid + "','" + row.name + "')>点击管理</a>";
+        }
+    }
+
+    function seeRecord(tid, name) {
+        var url = "/Web/Area/VillagePage?tid=" + tid;
+        window.parent.addTab(name, url);
+    }
+
+
+    var editIndex = undefined;
+    function endEditing() {
+        if (editIndex == undefined) { return true }
+        if ($('#dg').datagrid('validateRow', editIndex)) {
+            $('#dg').datagrid('endEdit', editIndex);
+            editIndex = undefined;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    function ronClickRow(index) {
+        if (editIndex != index) {
+            if (endEditing()) {
+                $('#dg').datagrid('selectRow', index)
+                        .datagrid('beginEdit', index);
+                editIndex = index;
+            } else {
+                $('#dg').datagrid('selectRow', editIndex);
+            }
+        }
+    }
+    function append() {
+        if (endEditing()) {
+            $('#dg').datagrid('appendRow', { status: 'P' });
+            editIndex = $('#dg').datagrid('getRows').length - 1;
+
+            $('#dg').datagrid('selectRow', editIndex)
+                    .datagrid('beginEdit', editIndex);
+        }
+    }
+    function removeit() {
+        editIndex = undefined;
+        var row = $('#dg').datagrid('getSelected');
+        if (row) {
+            $.messager.confirm('提示', '你确定要删除这条信息吗？', function (r) {
+                if (r) {
+                    $.ajax({
+                        url: "townDel?tid=" + row.tid,
+                        type: "get",
+                        timeout: "100000",
+                        dataType: "json",
+                        data: {
+
+                        },
+                        success: function (text) {
+                            if (text.msg == "") {
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: text.msg
+                                });
+                            }
+                        },
+                        error: function () {
+                            $.messager.show({
+                                title: '错误',
+                                msg: '系统异常！'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+    }
+
+    //save
+    function accept() {
+        if (endEditing()) {
+            //获取更新更改的行的集合
+            row = $("#dg").datagrid('getChanges');
+            //DataGrid的更该行为不为0
+            if (row.length) {
+                $.ajax(
+                    {
+                        type: 'POST',
+                        url: "townSave",
+                        data: { 'data': JSON.stringify(row), 'aid': aid },
+                        success: function (data) {
+                            if (data != "") {
+                                $.messager.alert('提示', '保存成功！', 'info', function () {
+                                    $('#dg').datagrid('reload');    // 重新载入当前页面数据
+                                });
+
+                            }
+                            else {
+                                $.messager.alert('提示信息', '保存失败，请联系管理员！', 'warning');
+                            }
+                        },
+                        error: function () {
+                            $.messager.alert('提示', '系统出错！');
+                        }
+
+                    });
+            }
+            else  //如果没有修改数据，则提醒用户
+            {
+                $.messager.alert('提示信息', '您还没有修改信息！', 'warning');
+            }
+        }
+        editIndex = undefined;
+    }
+
+
+</script>
+
+}

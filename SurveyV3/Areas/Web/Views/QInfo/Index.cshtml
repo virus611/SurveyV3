@@ -1,0 +1,192 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+
+<div class="easyui-panel" style="margin-bottom: 5px;padding:5px;">
+    如果题发生变化，修改前请先联系开发人员，确定PAD程序影响的范围<br />
+    删除前请先保存
+</div>
+<div style="padding:10px;height:auto">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add'" onclick="addRecord()">新增</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save'" onclick="accept()">保存</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove'" onclick="deleteRecord()">删除</a>
+</div>
+
+<table class="easyui-datagrid"
+       id="dg" 
+       data-options="
+            height: (document.body.clientHeight || document.documentElement.clientHeight)-100,
+            rownumbers:true,
+            singleSelect:true,
+            url:'infoList',
+            method:'get',
+            onClickRow: onClickRow">
+    <thead>
+        <tr>
+            <th data-options="field:'qno',width:80,editor:'text'">问题序号</th>
+            <th data-options="field:'question',editor:'text',width:200">问题描述</th>
+            <th data-options="field:'answer',editor:'text',width:400">答案项，用英文逗号分隔。选填</th>
+            <th data-options="field:'muti',width:80,formatter:timatter,editor:{
+							    type:'combobox',
+							    options:{
+							        editable:false,
+                                    panelHeight:'auto',
+									valueField:'value',
+								    textField:'text',
+								    data:[
+                                        {'text':'日期选择','value':'-1'},
+                                        {'text':'单选题','value':'0'},
+                                        {'text':'多选题','value':'1'},
+                                        {'text':'只有输入','value':'2'}
+                                    ],
+								    required:true
+							    }
+						}">类型</th>
+            <th data-options="field:'iput',width:80,formatter:typeformatter,editor:{
+							    type:'combobox',
+							    options:{
+							        editable:false,
+                                    panelHeight:'auto',
+								    valueField:'value',
+								    textField:'text',
+								    data:[
+                                        {'text':'否','value':'0'},
+                                        {'text':'是','value':'1'}
+                                    ],
+								    required:true
+							    }
+						}">答案支持录入</th>
+            <th data-options="field:'jump',editor:'text',width:150">限定条件跳转到的问题序号</th>
+
+        </tr>
+    </thead>
+</table>
+
+@section Script{
+<script type="text/javascript">
+    function typeformatter(value, row, index) {
+        if (value == "1") {
+            return "是";
+        } else {
+            return "否";
+        }
+    }
+
+    function timatter(value, row, index) {
+        if (value == "-1") {
+            return "日期选择";
+        } else if (value == "0") {
+            return "单选题";
+        } else if (value == '1') {
+            return "多选题";
+        } else {
+            return "只有输入";
+        }
+    }
+
+    var editIndex = undefined;
+    function endEditing() {
+        if (editIndex == undefined) { return true }
+        if ($('#dg').datagrid('validateRow', editIndex)) {
+            $('#dg').datagrid('endEdit', editIndex);
+            editIndex = undefined;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    function onClickRow(index) {
+        if (editIndex != index) {
+            if (endEditing()) {
+                $('#dg').datagrid('selectRow', index)
+                        .datagrid('beginEdit', index);
+                editIndex = index;
+            } else {
+                $('#dg').datagrid('selectRow', editIndex);
+            }
+        }
+    }
+    function addRecord() {
+        if (endEditing()) {
+            $('#dg').datagrid('appendRow', { status: 'P', iput: 0, muti: 0 });
+            editIndex = $('#dg').datagrid('getRows').length - 1;
+            $('#dg').datagrid('selectRow', editIndex)
+                    .datagrid('beginEdit', editIndex);
+        }
+    }
+
+
+    //save
+    function accept() {
+        if (endEditing()) {
+            //获取更新更改的行的集合
+            row = $("#dg").datagrid('getChanges');
+            //DataGrid的更该行为不为0
+            if (row.length) {
+                $.ajax(
+                    {
+                        type: 'POST',
+                        url: "infoSave",
+                        data: { 'data': JSON.stringify(row) },
+                        success: function (data) {
+                            if (data != "") {
+                                $.messager.alert('提示', '保存成功！', 'info', function () {
+                                    $('#dg').datagrid('reload');    // 重新载入当前页面数据
+                                });
+
+                            }
+                            else {
+                                $.messager.alert('提示信息', '保存失败，请联系管理员！', 'warning');
+                            }
+                        }
+                    });
+            }
+            else  //如果没有修改数据，则提醒用户
+            {
+                $.messager.alert('提示信息', '您还没有修改信息！', 'warning');
+            }
+        }
+        editIndex = undefined;
+    }
+
+
+    //删除记录
+    function deleteRecord() {
+        editIndex = undefined;
+        var row = $('#dg').datagrid('getSelected');
+        if (row) {
+            $.messager.confirm('提示', '你确定要删除这条信息吗？', function (r) {
+                if (r) {
+                    $.ajax({
+                        url: "infoDel?qid=" + row.qid,
+                        type: "get",
+                        timeout: "100000",
+                        dataType: "json",
+                        data: {
+
+                        },
+                        success: function (text) {
+                            if (text.msg == "") {
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: text.msg
+                                });
+                            }
+                        },
+                        error: function () {
+                            $.messager.show({
+                                title: '错误',
+                                msg: '系统异常！'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+
+</script>
+}

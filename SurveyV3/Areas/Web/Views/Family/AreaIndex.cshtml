@@ -1,0 +1,111 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+
+@section Content{
+     
+<script type="text/javascript">
+    var acode = '@ViewBag.acode';
+</script>
+}
+
+ 
+<div id="tb"> 
+    <div style="padding:5px;height:auto">
+        乡镇选择: <input class="easyui-combobox" style="width:100px" id="ctown">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 村选择: <input class="easyui-combobox" style="width:100px" id="cvillage">
+    </div>
+</div>
+<table class="easyui-datagrid"
+       id="dg" 
+       data-options="
+            height: (document.body.clientHeight || document.documentElement.clientHeight)-100,
+            rownumbers:true,
+            singleSelect: true,
+            url: '',
+            method: 'get', 
+            toolbar:'#tb'">
+    <thead>
+        <tr> 
+            <th data-options="field:'code',width:100">家庭户编码</th>
+            <th data-options="field:'name',width:100 ">户主姓名</th>
+            <th data-options="field:'address',width:200 ">详细地址</th>
+            <th data-options="field:'kish',width:120">KISH值</th>
+            <th data-options="field:'g1',width:120">F07值</th>
+            <th data-options="field:'dx2',align:'center',formatter:memberformate,width:120">家庭成员</th>
+            <th data-options="field:'rid',align:'center',formatter:resultformate,width:100">调查结果</th>
+            <th data-options="field:'lastcode',align:'center',width:100">最终完成代码</th>
+            <th data-options="field:'lasttext',align:'center',width:200">最终完成情况</th>
+        </tr>
+    </thead>
+</table>
+
+@section Script {
+
+
+<script type="text/javascript">
+    function resultformate(value, row, index) {
+        if (row.rid == null || row.rid == '') {
+            return "";
+        } else if (row.rid.length > 20) {
+            return "已调查";
+        } else {
+            return row.rid;
+        }
+    }
+
+
+    //查看成员
+    function seeMember(fid, code) {
+        var url = "/Web/Family/MemberPage?code=" + code;
+        window.parent.addTab("家庭成员：" + code, url);
+    }
+
+
+    function memberformate(value, row, index) {
+        return "<a href='javascript:void(0);' onclick=seeMember('" + row.fid + "','" + row.code + "')>点击查看</a>"; 
+    }
+
+
+   
+    var tcode = '';
+    var vcode = '';
+
+    $(function () {
+
+        $('#ctown').combobox({
+            url: 'TownCombArea',
+            editable: false,
+            panelHeight: 'auto',
+            valueField: 'id',
+            textField: 'name',
+            onSelect: function (rec) {
+                tcode = rec.code;
+                vcode = '';
+                $("#cvillage").combobox('clear');
+                var url = "/Web/Family/VillageComb?tid=" + rec.id;
+                $("#cvillage").combobox('reload', url);
+            },
+        });
+
+        $('#cvillage').combobox({
+            url: '',
+            editable: false,
+            panelHeight: 'auto',
+            valueField: 'id',
+            textField: 'name',
+            onSelect: function (rec) {
+                vcode = rec.code;
+                var url = "/Web/Family/familyTownList?acode=" + acode + "&tcode=" + tcode + "&vcode=" + vcode;
+                $('#dg').datagrid('reload', url);
+            },
+        });
+    });
+
+ 
+     
+</script>
+
+
+
+}

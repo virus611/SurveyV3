@@ -1,0 +1,143 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+
+<div style="padding:10px;height:auto">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add'"
+       onclick="addRecord()">新增</a>
+
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove'"
+       onclick="deleteRecord()">删除</a>
+
+</div>
+
+
+<table class="easyui-datagrid"
+       id="dg"
+       data-options="
+                height: (document.body.clientHeight || document.documentElement.clientHeight)-50,
+				rownumbers:true,
+				iconCls: 'icon-edit',
+				singleSelect: true,
+				url: 'appList', 
+				method: 'get'">
+    <thead>
+        <tr>
+            <th data-options="field:'name',width:200,editor:'text'">版本名称</th>
+            <th data-options="field:'current',width:200,editor:'text'">当前版本</th>
+            <th data-options="field:'least',width:200,editor:'text'">最低兼容版本</th>
+            <th data-options="field:'time',width:200,editor:'text'">发布时间</th>
+            <th data-options="field:'url',width:200,editor:'text'">文件路径</th>
+
+        </tr>
+    </thead>
+</table>
+
+<!-- 新增 -->
+<div id="dlg" class="easyui-dialog"
+     style="width: 400px; height: 400px; padding: 20px" closed="true"
+     modal="true" buttons="#dlg-buttons">
+    <form id="fm" method="post" enctype="multipart/form-data">
+
+
+        <div style="margin-bottom: 20px">
+            <span style="width: 80px;">版本名称:</span>
+            <input name="vname"
+                   style="width: 100%; height: 32px" class="easyui-textbox"
+                   maxlength="50" data-options="required:true,prompt:'请输入版本名称'" />
+        </div>
+
+        <div style="margin-bottom: 20px">
+            <span style="width: 80px;">当前版本:</span>
+            <input name="current"
+                   style="width: 100%; height: 32px" class="easyui-numberbox"
+                   maxlength="50" data-options="required:true,prompt:'请输当前版本号'" />
+        </div>
+
+        <div style="margin-bottom: 20px">
+            <span style="width: 80px;">最低兼容版本:</span>
+            <input name="least"
+                   style="width: 100%; height: 32px" class="easyui-numberbox"
+                   maxlength="50" data-options="required:true,prompt:'请输最低版本号'" />
+        </div>
+        <div style="margin-bottom:20px">
+            <input class="easyui-filebox" name="file" data-options="buttonText:'选择apk',required:true,prompt:'选择APK文件'" style="width:100%">
+        </div>
+
+    </form>
+</div>
+<div id="dlg-buttons">
+    <a href="#" class="easyui-linkbutton" iconcls="icon-ok"
+       onclick="saveObj()">保存</a>
+    <a href="#" class="easyui-linkbutton"
+       iconcls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">取消</a>
+</div>
+
+@section Script{
+    <script type="text/javascript">
+
+
+        //新增界面
+        function addRecord() {
+            //弹出来
+            $('#dlg').dialog('open').dialog('setTitle', '新增版本');
+            $('#fm').form('clear');
+        }
+
+
+
+        //删除记录
+        function deleteRecord() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('提示', '你确定要删除这条记录吗？', function (r) {
+                    if (r) {
+                        $.ajax({
+                            url: "appDel?sid=" + row.sid,
+                            type: "get",
+                            timeout: "100000",
+                            dataType: "json",
+                            data: {},
+                            success: function (text) {
+                                if (text.msg == "") {
+                                    $('#dg').datagrid('reload');
+                                } else {
+                                    $.messager.alert("错误", text.msg, "info", function () {
+                                    });
+                                }
+                            },
+                            error: function () {
+                                $.messager.alert("错误", "系统异常", "info", function () {
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        //保存
+        function saveObj() {
+            $('#fm').form('submit', {
+                url: "appSave",
+                dataType: "json",
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (text) {
+                    var text = eval('(' + text + ')');
+                    if (text.msg == '') {
+                        $('#dlg').dialog('close');
+                        $('#dg').datagrid('reload');
+
+                    } else {
+                        $.messager.alert("错误", text.msg, "info", function () {
+                        });
+                    }
+                }
+            });
+        }
+    </script>
+
+
+}

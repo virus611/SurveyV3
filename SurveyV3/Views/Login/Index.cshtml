@@ -1,0 +1,168 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>后台管理</title>
+    <script type="text/javascript" src="~/Scripts/jquery.min.js"></script>
+    <style type="text/css">
+        ul, li {
+            margin: 0px;
+            padding: 0px;
+            list-style-type: none;
+        }
+
+        .main ul {
+            float: left;
+            width: 280px;
+            margin-top: 80px;
+            padding-left: 80px;
+        }
+
+        .main li {
+            margin-bottom: 18px;
+        }
+
+        .main .logintxt {
+            width: 170px;
+            height: 24px;
+            line-height: 24px;
+        }
+
+        .main dt {
+            margin-top: 20px;
+        }
+
+        .main .loginbtn {
+            width: 367px;
+            height: 64px;
+            margin-left: 42px;
+            margin-top: 30px;
+            cursor: pointer;
+            background: url("/Content/images/loginbtn.png") no-repeat;
+            border: 0px;
+        }
+
+        .bodybg {
+            background: url("/Content/images/bg.png") no-repeat;
+        }
+
+        .imgtitle {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+        }
+
+        .divtitle {
+            position: absolute;
+            top: 60%;
+            left: 10%;
+            width: 650px;
+        }
+
+        .main {
+            position: absolute;
+            top: 30%;
+            left: 60%;
+            width: 451px;
+            height: 352px;
+            background: url("/Content/images/input_rect.png") no-repeat;
+        }
+    </style>
+</head>
+<body class="bodybg">
+    <img src="~/Content/images/img_title.png" class="imgtitle">
+    <div style="text-align: center" class="divtitle">Ver3.0</div>
+
+
+    <form id="fm">
+        <div class="main">
+            <ul>
+                <li>
+                    登录帐号：<input id="username" name="username" value="1重庆市1" class="logintxt" type="text" />
+                </li>
+                <li>
+                    登录密码：<input id="pwd" name="pwd" value="123321" class="logintxt" type="password" />
+                </li>
+                <li>
+                    登录身份：<select id="type" class="logintxt">
+                             <option value="admin">平台管理员</option>
+                             <option value="area">区域管理员</option>
+                     
+                       
+                    </select>
+                </li>
+
+            </ul>
+
+            <dl>
+                <dt>
+                    <input class="loginbtn" type="button" value="" onclick="onLoginClick()" />
+                </dt>
+            </dl>
+
+        </div>
+    </form>
+
+    <script type="text/javascript">
+    function onLoginClick() {
+
+        var UserName = document.getElementById("username").value;
+        var Password = $("#pwd").val();
+        var tp= $("#type").val();
+        if (UserName == "") {
+            alert("用户名不能为空！");
+            document.getElementById("username").focus();
+            return;
+        }
+        if (Password == "") {
+            alert("密码不能为空！");
+            document.getElementById("pwd").focus();
+            return;
+        }
+
+        $.ajax({
+			url : "/Login/logincommit",
+			type:"post",
+			data:{"username":UserName,"pwd":Password,"stype":tp},
+			dataType : "json",
+			success: function (text) {
+			    console.log(text);
+				if (text.msg=='') {
+					 //ok
+				    window.location.href = "/Web/Main";
+				} else {
+					alert(text.msg);
+
+				}
+			}
+		});
+    }
+
+
+    $(function(){
+
+    	var _topWin = window;
+    	while (_topWin != _topWin.parent.window)
+    	{
+    		_topWin = _topWin.parent.window;
+    	}
+    	if (window != _topWin){
+    	    _topWin.document.location.href = '/Login/Index';
+    	}
+
+    	$.ajaxSetup({ cache: false });
+        $(document).keydown(function(event){
+            var curKey = event.which;
+            if(curKey==13){
+                $(".loginbtn").click();
+            }
+        });
+    });
+    </script>
+</body>
+
+</html>

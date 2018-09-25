@@ -1,0 +1,192 @@
+﻿@{
+    Layout = "~/Views/Shared/_PC.cshtml";
+}
+@section Content{
+    <style>
+    .lired {
+        color: red;
+    }   
+    </style>
+
+}
+@using Business.VO;
+ 
+@if (ViewBag.check != null)
+{
+    List<CheckVO> clist = ViewBag.check as List<CheckVO>;
+    foreach (CheckVO item in clist)
+    {
+        <div style="margin-top: 10px;">
+            <div class="easyui-panel" title="@(item.qno).判断题" style="padding-left: 10px;padding-right: 10px;">
+                <p>
+                    @item.question
+                </p>
+
+                <div>
+                    <ul>
+                        <li id="@(item.qno)_1">@item.a1 </li>
+                        <li id="@(@item.qno)_2">@item.a2 </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+} 
+  
+<br />
+<br />
+@if (ViewBag.single != null)
+{
+    List<SingleVO> slist = ViewBag.single as List<SingleVO>;
+    foreach (SingleVO item in slist)
+    {
+        <div style="margin-top: 10px;"> 
+            <div class="easyui-panel" title="@(@item.qno).单选题" style="padding-left: 10px;padding-right: 10px;">
+                <p>
+                    @item.question
+                </p>
+                @if (item.img != "")
+                {
+                     <img src="@item.img" width="100" />
+                }
+                 
+                <div>
+                    <ul>
+                        <li id="@(item.qno)_1">@item.a1</li>
+                        <li id="@(item.qno)_2">@item.a2</li>
+                        <li id="@(item.qno)_3">@item.a3</li>
+                        <li id="@(item.qno)_4">@item.a4</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+}
+ 
+
+<br />
+<br />
+
+@if (ViewBag.muti != null)
+{
+    List<MutiVO> mlist = ViewBag.muti as List<MutiVO>;
+    foreach (MutiVO item in mlist)
+    {
+        <div style="margin-top: 10px;">
+            <div class="easyui-panel" title="@(item.qno).多选题" style="padding-left: 10px;padding-right: 10px;">
+                <p>
+                    @item.question
+                </p>
+                <div>
+                    <ul>
+                        <li id="@(item.qno)_1">@item.a1</li>
+                        <li id="@(item.qno)_2">@item.a2</li>
+                        <li id="@(item.qno)_3">@item.a3</li>
+                        <li id="@(item.qno)_4">@item.a4</li>
+                        <li id="@(item.qno)_5">@item.a5</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+}
+ 
+
+
+<br />
+<br />
+@if (ViewBag.scene != null)
+{
+    List<SceneSubVO> sclist = ViewBag.scene as List<SceneSubVO>;
+    foreach (SceneSubVO item in sclist)
+    {
+        <div style="margin-top: 10px;">
+            <div class="easyui-panel" title="@(item.qno).情景题" style="padding-left: 10px;padding-right: 10px;">
+                <p>
+                    @item.question
+                </p>
+
+
+                <p style="margin-top: 10px;">
+                    @item.subquestion 
+                </p>
+                <div>
+                    <ul>
+                        <li id="@(item.qno)_1">@item.a1</li>
+                        <li id="@(item.qno)_2">@item.a2</li>
+                        <li id="@(item.qno)_3">@item.a3</li>
+                        <li id="@(item.qno)_4">@item.a4</li>
+                        @if (item.type == 2)
+                        {
+                            <li id="@(item.qno)_5">@item.a5</li>
+                        } 
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+}
+ 
+
+
+<br />
+<br />
+
+@if (ViewBag.info != null)
+{
+    List<QInfoVO> ilist = ViewBag.info as List<QInfoVO>;
+    foreach (QInfoVO item in ilist)
+    {
+        <div style="margin-top: 10px;">
+            <div class="easyui-panel" title="@(item.qno).基本信息题" style="padding-left: 10px;padding-right: 10px;">
+                <p>
+                    @item.question
+                </p>
+                <div>
+                    <!-- 直接上答案 -->
+                    <ul>
+                        <li id="@item.qno"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+}
+ 
+ 
+@section Script{
+
+<script type="text/javascript">
+    var rid = '@ViewBag.rid';
+
+    $(function () {
+        $.ajax(
+                {
+                    url: "detailJson?rid=" + rid,
+                    type: "get",
+                    timeout: "100000",
+                    dataType: "json",
+                    data: {},
+                    success: function (json) {
+                        //基本数据，赋值
+                        console.log(json);
+                        var info = json.info;
+                        for (id in info) {
+                            $('#' + id).text(info[id]);
+                        }
+                        //其它调查题，只需要修改class即可
+                        var arr = json.arr;
+                        for (var i = 0; i < arr.length; i++) {
+                            $('#' + arr[i]).attr('class', 'lired');
+                        }
+                    },
+                    error: function () {
+                        $.messager.alert('提示', '系统出错！');
+                    }
+
+                });
+
+    })
+
+</script>
+}
