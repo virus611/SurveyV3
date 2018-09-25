@@ -18,7 +18,7 @@ namespace Business.Mobile
     public class BUpload
     {
 
-        BQuery bquery = new BQuery();
+        BQuery bquery = new BQuery();   
 
         private string longToStr(long t)
         {
